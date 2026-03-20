@@ -10,11 +10,12 @@ def analyze_audio(file_path):
     """Performs the spectral math and saves the visual/data maps."""
     # 1. Clean the filename for Git and Web compatibility
     base_name = os.path.splitext(os.path.basename(file_path))[0]
+    # Removes spaces, apostrophes, and dashes to prevent 'Exit 128'
     clean_name = base_name.replace(" ", "_").replace("'", "").replace("-", "_")
     
     print(f"--- Auditing: {clean_name} ---")
     
-    # 2. Load and process audio
+    # 2. Load and process audio (FFT Math)
     y, sr = librosa.load(file_path, sr=22050)
     S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
     S_dB = librosa.power_to_db(S, ref=np.max)
@@ -44,13 +45,14 @@ def generate_gallery():
     <head>
         <title>StudioGenius Forensic Gallery</title>
         <style>
-            body { background: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; }
-            h1 { color: #00ff9d; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            body { background: #0a0a0a; color: #00ff9d; font-family: 'Courier New', Courier, monospace; padding: 40px; }
+            h1 { color: #00ff9d; border-bottom: 2px solid #00ff9d; padding-bottom: 10px; text-transform: uppercase; }
             .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 30px; margin-top: 30px; }
-            .card { background: #1e1e1e; padding: 15px; border-radius: 12px; border: 1px solid #333; transition: transform 0.2s; }
-            .card:hover { transform: scale(1.02); border-color: #00ff9d; }
-            img { width: 100%; border-radius: 6px; margin-top: 10px; }
-            .track-title { font-weight: bold; color: #00ff9d; text-transform: uppercase; letter-spacing: 1px; }
+            .card { background: #1a1a1a; padding: 15px; border-radius: 4px; border: 1px solid #333; }
+            .card:hover { border-color: #00ff9d; box-shadow: 0 0 10px #00ff9d; }
+            img { width: 100%; border-radius: 2px; margin-top: 10px; filter: grayscale(20%); }
+            .track-title { font-weight: bold; color: #ffffff; letter-spacing: 1px; }
+            .meta { font-size: 10px; color: #666; margin-top: 5px; }
         </style>
     </head>
     <body>
@@ -63,6 +65,7 @@ def generate_gallery():
         html_content += f"""
             <div class="card">
                 <div class="track-title">{display_name}</div>
+                <div class="meta">SOURCE: {m}</div>
                 <a href="{m}" target="_blank"><img src="{m}" /></a>
             </div>
         """
@@ -82,22 +85,27 @@ if __name__ == "__main__":
         os.makedirs(processed_folder)
 
     if os.path.exists(upload_folder):
-        audio_files = [f for f in os.listdir(upload_folder) if f.endswith(('.wav', '.mp3', '.m4a'))]
+        # Catch wav, mp3, and m4a
+        audio_files = [f for f in os.listdir(upload_folder) if f.lower().endswith(('.wav', '.mp3', '.m4a'))]
         
         if not audio_files:
-            print("Uploads folder is empty. Generating gallery from existing data...")
+            print("Uploads folder is empty. Refreshing gallery from current assets...")
         
         for filename in audio_files:
             full_path = os.path.join(upload_folder, filename)
             
-            # 1. Analyze
-            analyze_audio(full_path)
-            
-            # 2. Archive (The Janitor)
-            shutil.move(full_path, os.path.join(processed_folder, filename))
-            print(f"Moved {filename} to processed storage.")
+            # 1. RUN THE MATH
+            try:
+                analyze_audio(full_path)
+                
+                # 2. MOVE THE EVIDENCE (The Janitor step)
+                # This clears the upload folder to stop the 'broken record' loop
+                shutil.move(full_path, os.path.join(processed_folder, filename))
+                print(f"Moved {filename} to processed storage.")
+            except Exception as e:
+                print(f"Forensic failure on {filename}: {e}")
     
-    # Always rebuild the gallery so it matches the current files
+    # 3. BUILD THE VIEW
     generate_gallery()
 
 

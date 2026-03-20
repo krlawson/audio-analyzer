@@ -22,6 +22,10 @@ jobs:
           sudo apt-get install -y ffmpeg libsndfile1
           pip install librosa numpy matplotlib
 
+      - name: List Uploaded Files
+        run: ls -R uploads/
+
+
       - name: Run Forensic Analysis
         run: python analyzer.py
 
@@ -29,10 +33,18 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
-          git add map_*.png data_*.json
-          # This line prevents the 'nothing to commit' error
-          git diff-index --quiet HEAD || git commit -m "Forensic Audit Complete [skip ci]"
-          git push
+          
+          # Check if ANY maps were actually created
+          if ls map_*.png 1> /dev/null 2>&1; then
+            git add map_*.png data_*.json
+            git commit -m "Forensic Batch Update [skip ci]"
+            git push
+          else
+            echo "Physical results (map_*.png) are missing. Printing directory for debug:"
+            ls -R
+            exit 1
+          fi
+
 
 
 

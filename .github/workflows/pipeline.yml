@@ -27,11 +27,19 @@ jobs:
       - name: Run Analysis
         run: python analyzer.py  # This points to your actual Python file
 
-      - name: Save Results to Repo
+      - name: Commit and Push Results
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
-          git add analysis_map.png analysis_data.json
-          git commit -m "Forensic Map Updated [skip ci]" || echo "No changes to commit"
-          git push
+          
+          # Check if the file exists before adding
+          if [ -f "analysis_map.png" ]; then
+            git add analysis_map.png analysis_data.json
+            git commit -m "Update Forensic Maps [skip ci]"
+            git push
+          else
+            echo "Physical result missing. Check Python logs."
+            exit 1
+          fi
+
 

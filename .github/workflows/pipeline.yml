@@ -28,20 +28,25 @@ jobs:
           # 1. THE GEOGRAPHY FIX
           git config --global --add safe.directory /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
           
-          # 2. Identity
+          # 2. Setup Identity
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
-          
-          # 3. THE FIX: Add and Commit BEFORE pulling
-          # This clears the 'Unstaged Changes' error by packaging the results first
-          git add "map_*.png" "data_*.json" "processed/*"
-          
-          # Only commit if there are actually new files to save
-          git diff --staged --quiet || git commit -m "Forensic Batch Update [skip ci]"
 
-          # 4. Now we can safely pull and push
+          # 3. STASH THE WORK: This hides the new maps for a split second
+          # This is the "Magic Trick" that stops the 128 Error
+          git add "map_*.png" "data_*.json" "processed/*"
+          git stash
+
+          # 4. SYNC: Now the path is clear to pull the latest code
           git pull origin main --rebase
+
+          # 5. UNSTASH & COMMIT: Bring the maps back and save them
+          git stash pop || echo "No new files to pop"
+          git add .
+          git diff --staged --quiet || git commit -m "Forensic Batch Update [skip ci]"
+          
           git push
+
 
 
 

@@ -28,17 +28,18 @@ jobs:
           # 1. THE GEOGRAPHY FIX
           git config --global --add safe.directory /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
           
-          # 2. Setup Identity
+          # 2. Identity
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
           
-          # 3. Add and Commit BEFORE pulling
-          # This clears the 'Unstaged Changes' error
-          git add "map_*.png" "data_*.json"
+          # 3. THE FIX: Add and Commit BEFORE pulling
+          # This clears the 'Unstaged Changes' error by packaging the results first
+          git add "map_*.png" "data_*.json" "processed/*"
+          
+          # Only commit if there are actually new files to save
           git diff --staged --quiet || git commit -m "Forensic Batch Update [skip ci]"
 
-          # 4. Sync and Push
-          # Now that the maps are committed, the rebase will work
+          # 4. Now we can safely pull and push
           git pull origin main --rebase
           git push
 

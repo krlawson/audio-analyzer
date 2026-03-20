@@ -1,31 +1,39 @@
-name: Fast Audio Analysis
-on:
-  push:
-    paths:
-      - 'uploads/**'
+name: Audio Forensic Pipeline
+on: [push]
 
 permissions:
   contents: write
 
 jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}/audio-processor:latest
+  forensic-job:
+    runs-on: ubuntu-latest # This is the 'Worker' GitHub provides
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Run Batch Analysis
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Forensic Tools (FFmpeg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libsndfile1
+          pip install librosa numpy matplotlib
+
+      - name: Run Forensic Analysis
         run: python analyzer.py
 
-      - name: Push Results
+      - name: Save Results to Repo
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
           git add map_*.png data_*.json
-          git commit -m "Forensic Batch Update [skip ci]" || echo "No changes"
+          # This line prevents the 'nothing to commit' error
+          git diff-index --quiet HEAD || git commit -m "Forensic Audit Complete [skip ci]"
           git push
+
 
 
 

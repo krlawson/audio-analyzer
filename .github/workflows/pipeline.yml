@@ -1,0 +1,25 @@
+name: Audio Analysis Pipeline
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libsndfile1
+
+      - name: Install Python Libraries
+        run: pip install librosa numpy matplotlib
+
+      - name: Run Analysis
+        run: python analyzer.py  # This points to your actual Python file

@@ -1,30 +1,24 @@
-name: Audio Forensic Pipeline
-on: [push]
+name: Fast Audio Analysis
+on:
+  push:
+    paths:
+      - 'uploads/**' # Runs only when you add music
 
 permissions:
   contents: write
+  packages: read
 
 jobs:
-  forensic-job:
-    runs-on: ubuntu-latest # This is the 'Worker' GitHub provides
+  analyze:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository }}/forensic-studio:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }} # The 'Handshake'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Forensic Tools (FFmpeg)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg libsndfile1
-          pip install librosa numpy matplotlib
-
-      - name: List Uploaded Files
-        run: ls -R uploads/
-
 
       - name: Run Forensic Analysis
         run: python analyzer.py
@@ -34,13 +28,11 @@ jobs:
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
           
-          # We use " " to tell Git to ignore the spaces in the filenames
-          git add "map_*.png" "data_*.json" "analysis_map.png" "analysis_data.json"
+          # Quotes handle the spaces in your filenames
+          git add "map_*.png" "data_*.json"
           
-          # This line checks if there are actually new files to save. 
-          # If nothing is new, it simply says "No changes" instead of failing (Red).
+          # Only push if there's actually new data
           git diff --staged --quiet || git commit -m "Forensic Batch Update [skip ci]"
-          
           git push
 
 

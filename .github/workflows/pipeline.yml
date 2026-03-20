@@ -34,15 +34,15 @@ jobs:
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
           
-          # Change this to match the actual files we see in your debug log
-          if [ -f "analysis_map.png" ]; then
-            git add analysis_map.png analysis_data.json
-            git commit -m "Forensic Audit Complete [skip ci]"
-            git push
-          else
-            echo "Physical results still missing."
-            exit 1
-          fi
+          # We use " " to tell Git to ignore the spaces in the filenames
+          git add "map_*.png" "data_*.json" "analysis_map.png" "analysis_data.json"
+          
+          # This line checks if there are actually new files to save. 
+          # If nothing is new, it simply says "No changes" instead of failing (Red).
+          git diff --staged --quiet || git commit -m "Forensic Batch Update [skip ci]"
+          
+          git push
+
 
 
 

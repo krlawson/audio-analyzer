@@ -26,7 +26,8 @@ def analyze_audio(file_path=None):
     librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel')
     plt.colorbar(format='%+2.0f dB')
     plt.tight_layout()
-    plt.savefig("analysis_map.png") # The critical physical file
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
+    plt.savefig(f"map_{base_name}.png")
     plt.close()
 
     # 4. THE PHYSICAL JSON

@@ -1,45 +1,31 @@
-name: Audio Analysis Pipeline
-on: [push]
+name: Fast Audio Analysis
+on:
+  push:
+    paths:
+      - 'uploads/**'
 
 permissions:
-  contents: write # This gives the 'worker' permission to push files
+  contents: write
 
 jobs:
-  build:
+  analyze:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/${{ github.repository }}/audio-processor:latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Run Batch Analysis
+        run: python analyzer.py
 
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg libsndfile1
-
-      - name: Install Python Libraries
-        run: pip install librosa numpy matplotlib
-
-      - name: Run Analysis
-        run: python analyzer.py  # This points to your actual Python file
-
-      - name: Commit and Push Results
+      - name: Push Results
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
-          
-          # Check if the file exists before adding
-          if [ -f "analysis_map.png" ]; then
-            git add analysis_map.png analysis_data.json
-            git commit -m "Update Forensic Maps [skip ci]"
-            git push
-          else
-            echo "Physical result missing. Check Python logs."
-            exit 1
-          fi
+          git add map_*.png data_*.json
+          git commit -m "Forensic Batch Update [skip ci]" || echo "No changes"
+          git push
+
 
 
